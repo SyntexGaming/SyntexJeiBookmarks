@@ -1,0 +1,20 @@
+{
+  "key.category.syntexjeibookmarks.main": "Syntex JEI-Lesezeichen",
+  "key.syntexjeibookmarks.add_mod": "Mod des Items unter der Maus speichern",
+  "syntexjeibookmarks.title": "Lesezeichen",
+  "syntexjeibookmarks.row.search": "Linksklick: suchen",
+  "syntexjeibookmarks.row.clear": "Linksklick: Suche leeren",
+  "syntexjeibookmarks.row.remove": "Rechtsklick: entfernen",
+  "syntexjeibookmarks.add": "Aktuelle Suche speichern",
+  "syntexjeibookmarks.add.query": "Speichert: %s",
+  "syntexjeibookmarks.add.duplicate": "%s ist schon gespeichert",
+  "syntexjeibookmarks.add.empty": "Erst etwas in die JEI-Suche tippen",
+  "syntexjeibookmarks.add.mod_hint": "[%s] über einem Item: dessen Mod speichern",
+  "syntexjeibookmarks.collapse": "Einklappen",
+  "syntexjeibookmarks.expand": "Lesezeichen ausklappen",
+  "syntexjeibookmarks.move": "Panel verschieben",
+  "syntexjeibookmarks.move.hint": "Mit gedrückter Maustaste ziehen",
+  "syntexjeibookmarks.dock.left": "Auf die linke Seite",
+  "syntexjeibookmarks.dock.right": "Auf die rechte Seite",
+  "syntexjeibookmarks.dock.reset": "Rechtsklick: Grundstellung"
+}
