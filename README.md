@@ -17,6 +17,14 @@ This was actually meant to be a private mod just for me, but why should I be the
 | 1.21.1 | NeoForge | `1.21.1` |
 | 1.20.1 | Forge | `1.20.1` |
 
+## Screenshots
+
+![The bookmark panel next to the JEI item list](screenshots/1-panel.png)
+
+![Clicking Powah filters the JEI list to @powah](screenshots/2-powah-search.png)
+
+![Clicking Applied Energistics filters the JEI list to @ae2](screenshots/3-ae2-search.png)
+
 ## How to use
 
 - `+` in the panel header saves the current text of the JEI search bar
