@@ -45,8 +45,8 @@ public class JeiBookmarksPlugin implements IModPlugin {
         registration.addGlobalGuiHandler(new IGlobalGuiHandler() {
             @Override
             public Collection<Rect2i> getGuiExtraAreas() {
-                BookmarkPanel.Layout layout = BookmarkPanel.layoutFor(Minecraft.getInstance().screen);
-                return layout == null ? List.of() : List.of(new Rect2i(layout.x(), layout.y(), layout.width(), layout.height()));
+                Rect2i area = BookmarkPanel.jeiExclusion(Minecraft.getInstance().screen);
+                return area == null ? List.of() : List.of(area);
             }
         });
     }
