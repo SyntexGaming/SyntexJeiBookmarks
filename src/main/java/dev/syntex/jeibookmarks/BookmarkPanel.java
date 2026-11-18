@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -62,6 +63,16 @@ public final class BookmarkPanel {
     private static boolean dragging;
     private static double grabX;
     private static double grabY;
+
+    /** Waehrend des Ziehens meldet das Panel JEI die Lage vom Griff-Druck: eine Aenderung der Sperrflaeche laesst JEI die ganze Liste neu anlegen. */
+    private static Screen frozenScreen;
+    private static Rect2i frozenArea;
+
+    private record LayoutKey(Screen screen, int version, int scroll, int screenWidth, int screenHeight, int guiLeft, int guiRight, boolean jeiWanted) {}
+
+    /** JEI fragt die Sperrflaeche mehrmals je Bild ab: das Layout wird nur neu gerechnet, wenn sich eine seiner Quellen aendert. */
+    private static LayoutKey cachedKey;
+    private static Layout cachedLayout;
 
     private BookmarkPanel() {}
 
@@ -136,6 +147,36 @@ public final class BookmarkPanel {
         if (properties.isEmpty()) {
             return null;
         }
+        IGuiProperties p = properties.get();
+        boolean strip = BookmarkStore.isLeft() && BookmarkStore.offsetX() < p.guiLeft();
+        boolean jeiWanted = strip && JeiBookmarkArea.wanted(runtime);
+        LayoutKey key = new LayoutKey(screen, BookmarkStore.version(), scroll, p.screenWidth(), p.screenHeight(), p.guiLeft(), p.guiRight(), jeiWanted);
+        if (key.equals(cachedKey)) {
+            return cachedLayout;
+        }
+        Layout layout = computeLayout(runtime, properties);
+        // Der Schluessel wird nach dem Rechnen gebildet: das Rechnen begrenzt die Scrollstellung.
+        cachedKey = new LayoutKey(screen, BookmarkStore.version(), scroll, p.screenWidth(), p.screenHeight(), p.guiLeft(), p.guiRight(), jeiWanted);
+        cachedLayout = layout;
+        return layout;
+    }
+
+    /** Was JEI als Sperrflaeche gemeldet wird; waehrend des Ziehens bleibt es die Lage vom Griff-Druck. */
+    public static Rect2i jeiExclusion(Screen screen) {
+        if (dragging && frozenArea != null && frozenScreen == screen) {
+            return frozenArea;
+        }
+        Layout layout = layoutFor(screen);
+        return layout == null ? null : new Rect2i(layout.x(), layout.y(), layout.width(), layout.height());
+    }
+
+    private static void endDrag() {
+        dragging = false;
+        frozenArea = null;
+        frozenScreen = null;
+    }
+
+    private static Layout computeLayout(IJeiRuntime runtime, Optional<IGuiProperties> properties) {
         int screenWidth = properties.get().screenWidth();
         int screenHeight = properties.get().screenHeight();
         int available = screenWidth - properties.get().guiRight();
@@ -359,7 +400,7 @@ public final class BookmarkPanel {
 
     /** @return true, wenn der Klick im Panel lag - er darf dann weder JEI noch den Container erreichen */
     static boolean mouseClicked(Screen screen, double mx, double my, int button) {
-        dragging = false;
+        endDrag();
         Layout layout = activeLayout(screen);
         if (layout == null || !layout.contains(mx, my)) {
             return false;
@@ -378,6 +419,8 @@ public final class BookmarkPanel {
             click();
         } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && layout.overGrip(mx, my)) {
             dragging = true;
+            frozenScreen = screen;
+            frozenArea = new Rect2i(layout.x(), layout.y(), layout.width(), layout.height());
             grabX = mx - layout.x();
             grabY = my - layout.y();
         } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && layout.overAdd(mx, my)) {
@@ -409,7 +452,7 @@ public final class BookmarkPanel {
         }
         Layout layout = activeLayout(screen);
         if (layout == null) {
-            dragging = false;
+            endDrag();
             return;
         }
         int reserved = BOTTOM_RESERVED;
@@ -429,7 +472,7 @@ public final class BookmarkPanel {
         if (!dragging) {
             return false;
         }
-        dragging = false;
+        endDrag();
         BookmarkStore.savePosition();
         return true;
     }

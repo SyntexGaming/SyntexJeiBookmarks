@@ -37,11 +37,17 @@ public final class BookmarkStore {
     /** Abstand zum Rand der gewaehlten Seite (GUI-Pixel), so bleibt die Lage bei anderer Fenstergroesse sinnvoll. */
     private static int offsetX = DEFAULT_MARGIN;
     private static int offsetY = DEFAULT_MARGIN;
+    /** Zaehlt jede Aenderung an Liste/Lage/Einklappen: das Panel merkt sich sein Layout, solange sich nichts aendert. */
+    private static int version;
 
     private BookmarkStore() {}
 
     public static Path file() {
         return FMLPaths.CONFIGDIR.get().resolve("syntexjeibookmarks.json");
+    }
+
+    public static int version() {
+        return version;
     }
 
     public static List<Bookmark> bookmarks() {
@@ -53,6 +59,7 @@ public final class BookmarkStore {
     }
 
     public static void setCollapsed(boolean value) {
+        version++;
         collapsed = value;
         save();
     }
@@ -76,6 +83,7 @@ public final class BookmarkStore {
 
     /** Setzt die Lage nur im Speicher (waehrend des Ziehens), geschrieben wird erst mit {@link #savePosition()}. */
     public static void setPosition(boolean toLeft, int x, int y) {
+        version++;
         left = toLeft;
         offsetX = Math.max(0, x);
         offsetY = Math.max(0, y);
@@ -101,17 +109,20 @@ public final class BookmarkStore {
             return false;
         }
         BOOKMARKS.add(new Bookmark(trimmed, null));
+        version++;
         save();
         return true;
     }
 
     public static void remove(Bookmark bookmark) {
         if (BOOKMARKS.remove(bookmark)) {
+            version++;
             save();
         }
     }
 
     static void load() {
+        version++;
         BOOKMARKS.clear();
         collapsed = false;
         setPosition(false, DEFAULT_MARGIN, DEFAULT_MARGIN);
