@@ -166,12 +166,44 @@ public final class BookmarkPanel {
     }
 
     /** Was JEI als Sperrflaeche gemeldet wird; waehrend des Ziehens bleibt es die Lage vom Griff-Druck. */
+    /** Beim Ziehen darf JEI nicht bei jeder Mausbewegung neu anlegen: Es zieht nach, sobald die Maus kurz ruht ... */
+    private static final long DRAG_IDLE_NANOS = 120_000_000L;
+    /** ... und beim Dauerziehen hoechstens so oft. */
+    private static final long DRAG_MAX_NANOS = 400_000_000L;
+    private static int liveX;
+    private static int liveY;
+    private static int liveW;
+    private static int liveH;
+    private static long liveSince;
+    private static long appliedAt;
+
     public static Rect2i jeiExclusion(Screen screen) {
         if (dragging && frozenArea != null && frozenScreen == screen) {
+            Layout live = layoutFor(screen);
+            if (live != null) {
+                long now = System.nanoTime();
+                if (live.x() != liveX || live.y() != liveY || live.width() != liveW || live.height() != liveH) {
+                    liveX = live.x();
+                    liveY = live.y();
+                    liveW = live.width();
+                    liveH = live.height();
+                    liveSince = now;
+                }
+                boolean idle = now - liveSince >= DRAG_IDLE_NANOS;
+                boolean overdue = now - appliedAt >= DRAG_MAX_NANOS;
+                if ((idle || overdue) && !sameArea(frozenArea, liveX, liveY, liveW, liveH)) {
+                    frozenArea = new Rect2i(liveX, liveY, liveW, liveH);
+                    appliedAt = now;
+                }
+            }
             return frozenArea;
         }
         Layout layout = layoutFor(screen);
         return layout == null ? null : new Rect2i(layout.x(), layout.y(), layout.width(), layout.height());
+    }
+
+    private static boolean sameArea(Rect2i area, int x, int y, int width, int height) {
+        return area.getX() == x && area.getY() == y && area.getWidth() == width && area.getHeight() == height;
     }
 
     private static void endDrag() {
@@ -424,6 +456,12 @@ public final class BookmarkPanel {
             dragging = true;
             frozenScreen = screen;
             frozenArea = new Rect2i(layout.x(), layout.y(), layout.width(), layout.height());
+            liveX = layout.x();
+            liveY = layout.y();
+            liveW = layout.width();
+            liveH = layout.height();
+            liveSince = System.nanoTime();
+            appliedAt = liveSince;
             grabX = mx - layout.x();
             grabY = my - layout.y();
         } else if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && layout.overAdd(mx, my)) {
