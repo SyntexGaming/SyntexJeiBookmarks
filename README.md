@@ -2,7 +2,7 @@
 
 Search bookmarks for JEI. Save searches like `@powah`, click one, and the JEI list filters to it.
 
-Client-side NeoForge mod for Minecraft 26.1 and 1.21.1. Requires [JEI](https://modrinth.com/mod/jei), not needed on the server.
+Client-side mod for Minecraft 26.1 and 1.21.1 (NeoForge) and 1.20.1 (Forge). Requires [JEI](https://modrinth.com/mod/jei), not needed on the server.
 
 This was actually meant to be a private mod just for me, but why should I be the only one who gets to use it?
 
@@ -18,7 +18,7 @@ Bookmarks and panel position are saved per instance in `config/syntexjeibookmark
 
 ## Building
 
-Put the JEI jar into `libs/` (file name in `libs/README.txt`), then run `gradlew build` with JDK 25 (branch `main`, 26.1) or JDK 21 (branch `1.21.1`).
+Put the JEI jar into `libs/` (file name in `libs/README.txt`), then run `gradlew build` with JDK 25 (branch `main`, 26.1), JDK 21 (branch `1.21.1`) or JDK 21 with the JDK 17 toolchain (branch `1.20.1`, Forge).
 
 ## License
 
