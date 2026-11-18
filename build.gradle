@@ -1,47 +1,62 @@
-plugins {
-    id 'java'
-    id 'eclipse'
-    id 'idea'
-    id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.148'
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
+    }
 }
 
-version = "${mod_version}"
-group = "${mod_group_id}"
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+version = mod_version
+group = mod_group_id
 
 base {
-    archivesName = "${mod_id}"
+    archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+// Minecraft 1.20.1 laeuft mit Java 17.
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-repositories {
-    mavenCentral()
-    maven { url = 'https://maven.neoforged.net/releases' }
+minecraft {
+    mappings channel: mappings_channel, version: mappings_version
 
-}
-
-neoForge {
-    version = "${neo_version}"
-
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
         }
     }
 }
 
-dependencies {
-    // JEI nur zum Kompilieren - zur Laufzeit kommt es aus dem Modpack (Pflicht-Abhaengigkeit in der mods.toml)
-    compileOnly files('libs/jei-26.1.2-neoforge-29.47.0.111.jar')
+repositories {
+    mavenCentral()
+    flatDir { dirs 'libs' }
 }
 
-var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // JEI nur zum Kompilieren - zur Laufzeit kommt es aus dem Modpack (Pflicht-Abhaengigkeit in der mods.toml).
+    compileOnly fg.deobf("libs:jei-1.20.1-forge:15.56.0.205")
+}
+
+tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
@@ -50,27 +65,31 @@ var generateModMetadata = tasks.register('generateModMetadata', ProcessResources
             mod_description        : mod_description,
     ]
     inputs.properties replaceProperties
-    expand replaceProperties
-    from 'src/main/templates'
-    into "${projectDir}/build/generated/sources/modMetadata"
+    filesMatching(['META-INF/mods.toml']) {
+        expand replaceProperties + [project: project]
+    }
 }
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-tasks.named('jar', Jar).configure {
+jar {
     manifest {
         attributes([
-                'Specification-Title'   : mod_id,
-                'Specification-Vendor'  : mod_authors,
-                'Specification-Version' : '1',
-                'Implementation-Title'  : mod_name,
-                'Implementation-Version': mod_version,
-                'Implementation-Vendor' : mod_authors,
+                'Specification-Title'    : mod_id,
+                'Specification-Vendor'   : mod_authors,
+                'Specification-Version'  : '1',
+                'Implementation-Title'   : mod_name,
+                'Implementation-Version' : mod_version,
+                'Implementation-Vendor'  : mod_authors,
         ])
     }
 }
 
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

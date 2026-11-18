@@ -20,6 +20,8 @@ public final class JeiBookmarkArea {
     private static Field toggleState;
     private static Method listDisplayed;
     private static Method bookmarkList;
+    /** JEI 15.x hat keine Zugriffsmethode, nur das Feld {@code bookmarkList}. */
+    private static Field bookmarkListField;
     private static Method listIsEmpty;
     private static Method overlayEnabled;
     private static Method backgroundArea;
@@ -41,7 +43,7 @@ public final class JeiBookmarkArea {
         }
         try {
             boolean enabled = (Boolean) overlayEnabled.invoke(toggleState.get(overlay));
-            return enabled && !(Boolean) listIsEmpty.invoke(bookmarkList.invoke(overlay));
+            return enabled && !(Boolean) listIsEmpty.invoke(bookmarkList != null ? bookmarkList.invoke(overlay) : bookmarkListField.get(overlay));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             fail(e);
             return false;
@@ -94,7 +96,14 @@ public final class JeiBookmarkArea {
         toggleField.setAccessible(true);
         Method background = contentsField.getType().getMethod("getBackgroundArea");
         Class<?> rectType = background.getReturnType();
-        Method list = overlayType.getMethod("getBookmarkList");
+        Method list = null;
+        Field listField = null;
+        try {
+            list = overlayType.getMethod("getBookmarkList");
+        } catch (NoSuchMethodException e) {
+            listField = overlayType.getDeclaredField("bookmarkList");
+            listField.setAccessible(true);
+        }
 
         getX = rectType.getMethod("getX");
         getY = rectType.getMethod("getY");
@@ -102,7 +111,8 @@ public final class JeiBookmarkArea {
         getHeight = rectType.getMethod("getHeight");
         listDisplayed = overlayType.getMethod("isListDisplayed");
         bookmarkList = list;
-        listIsEmpty = list.getReturnType().getMethod("isEmpty");
+        bookmarkListField = listField;
+        listIsEmpty = (list != null ? list.getReturnType() : listField.getType()).getMethod("isEmpty");
         overlayEnabled = toggleField.getType().getMethod("isBookmarkOverlayEnabled");
         backgroundArea = background;
         contents = contentsField;

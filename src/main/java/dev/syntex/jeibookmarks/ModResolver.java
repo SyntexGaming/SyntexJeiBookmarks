@@ -4,8 +4,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforgespi.language.IModInfo;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public final class ModResolver {
                         || normalize(m.getDisplayName()).contains(needle))
                 .sorted(Comparator.comparing(IModInfo::getModId))
                 .toList();
-        return partial.size() == 1 ? partial.getFirst() : null;
+        return partial.size() == 1 ? partial.get(0) : null;
     }
 
     private static String normalize(String text) {

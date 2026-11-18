@@ -1,7 +1,8 @@
 {
   "pack": {
     "description": "SyntexJeiBookmarks resources",
-    "min_format": 84,
-    "max_format": 101
+    "pack_format": 15,
+    "forge:resource_pack_format": 15,
+    "forge:data_pack_format": 15
   }
 }

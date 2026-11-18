@@ -7,7 +7,7 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -75,6 +75,10 @@ public final class BookmarkPanel {
     private static Layout cachedLayout;
 
     private BookmarkPanel() {}
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
 
     /**
      * Berechnete Position fuer den aktuellen Bildschirm. {@code rows} = sichtbare Zeilen ab {@code first},
@@ -148,15 +152,15 @@ public final class BookmarkPanel {
             return null;
         }
         IGuiProperties p = properties.get();
-        boolean strip = BookmarkStore.isLeft() && BookmarkStore.offsetX() < p.guiLeft();
+        boolean strip = BookmarkStore.isLeft() && BookmarkStore.offsetX() < p.getGuiLeft();
         boolean jeiWanted = strip && JeiBookmarkArea.wanted(runtime);
-        LayoutKey key = new LayoutKey(screen, BookmarkStore.version(), scroll, p.screenWidth(), p.screenHeight(), p.guiLeft(), p.guiRight(), jeiWanted);
+        LayoutKey key = new LayoutKey(screen, BookmarkStore.version(), scroll, p.getScreenWidth(), p.getScreenHeight(), p.getGuiLeft(), (p.getGuiLeft() + p.getGuiXSize()), jeiWanted);
         if (key.equals(cachedKey)) {
             return cachedLayout;
         }
         Layout layout = computeLayout(runtime, properties);
         // Der Schluessel wird nach dem Rechnen gebildet: das Rechnen begrenzt die Scrollstellung.
-        cachedKey = new LayoutKey(screen, BookmarkStore.version(), scroll, p.screenWidth(), p.screenHeight(), p.guiLeft(), p.guiRight(), jeiWanted);
+        cachedKey = new LayoutKey(screen, BookmarkStore.version(), scroll, p.getScreenWidth(), p.getScreenHeight(), p.getGuiLeft(), (p.getGuiLeft() + p.getGuiXSize()), jeiWanted);
         cachedLayout = layout;
         return layout;
     }
@@ -177,9 +181,9 @@ public final class BookmarkPanel {
     }
 
     private static Layout computeLayout(IJeiRuntime runtime, Optional<IGuiProperties> properties) {
-        int screenWidth = properties.get().screenWidth();
-        int screenHeight = properties.get().screenHeight();
-        int available = screenWidth - properties.get().guiRight();
+        int screenWidth = properties.get().getScreenWidth();
+        int screenHeight = properties.get().getScreenHeight();
+        int available = screenWidth - (properties.get().getGuiLeft() + properties.get().getGuiXSize());
         // In der Grundstellung (rechts oben) braucht das Panel Platz neben dem Container. Wer es selbst
         // verschoben hat, hat die Lage bewusst gewaehlt: dann wird es immer gezeigt, nur im Bild gehalten.
         boolean custom = !BookmarkStore.isDefaultPosition();
@@ -202,11 +206,11 @@ public final class BookmarkPanel {
         }
         int y = clampY(BookmarkStore.offsetY(), screenHeight, reserved, false);
         int space = screenHeight - y - HEADER_HEIGHT - reserved;
-        int rows = Math.clamp(space / ROW_HEIGHT, 0, bookmarks.size());
+        int rows = clamp(space / ROW_HEIGHT, 0, bookmarks.size());
         // JEIs eigene Lesezeichen-Liste steht links neben dem Container und weicht unserer Sperrflaeche aus.
         // Damit sie nicht zu einer schmalen Spalte gequetscht oder ganz ausgeblendet wird, klebt unser Panel
         // in diesem Streifen am linken Rand und bekommt hoechstens einen Teil der Hoehe, der Rest bleibt JEI.
-        boolean jeiStrip = left && BookmarkStore.offsetX() < properties.get().guiLeft() && JeiBookmarkArea.wanted(runtime);
+        boolean jeiStrip = left && BookmarkStore.offsetX() < properties.get().getGuiLeft() && JeiBookmarkArea.wanted(runtime);
         if (jeiStrip) {
             int maxRows = Math.max(1, ((screenHeight - reserved) / JEI_LIST_SHARE - HEADER_HEIGHT) / ROW_HEIGHT);
             rows = Math.min(rows, maxRows);
@@ -216,7 +220,7 @@ public final class BookmarkPanel {
         }
         int widthLimit = custom ? Math.min(MAX_WIDTH, screenWidth / 3) : Math.min(MAX_WIDTH, available / 2);
         int width = Math.min(wanted, widthLimit);
-        scroll = Math.clamp(scroll, 0, bookmarks.size() - rows);
+        scroll = clamp(scroll, 0, bookmarks.size() - rows);
         int height = HEADER_HEIGHT + rows * ROW_HEIGHT + (rows > 0 ? 1 : 0);
         return place(width, height, scroll, rows, false, left, jeiStrip, screenWidth, screenHeight, reserved);
     }
@@ -225,7 +229,7 @@ public final class BookmarkPanel {
     private static Layout place(int width, int height, int first, int rows, boolean collapsed, boolean left, boolean toEdge,
                                 int screenWidth, int screenHeight, int reserved) {
         int x = left ? (toEdge ? MARGIN : BookmarkStore.offsetX()) : screenWidth - BookmarkStore.offsetX() - width;
-        x = Math.clamp(x, 0, Math.max(0, screenWidth - width));
+        x = clamp(x, 0, Math.max(0, screenWidth - width));
         int y = clampY(BookmarkStore.offsetY(), screenHeight, reserved, collapsed);
         return new Layout(x, y, width, height, first, rows, collapsed, left, screenWidth, screenHeight);
     }
@@ -233,7 +237,7 @@ public final class BookmarkPanel {
     /** Hoechste erlaubte Oberkante: Kopfzeile plus (ausgeklappt) mindestens eine Zeile muessen noch ins Bild passen. */
     private static int clampY(int y, int screenHeight, int reserved, boolean collapsed) {
         int max = screenHeight - reserved - HEADER_HEIGHT - (collapsed ? 0 : ROW_HEIGHT + 1);
-        return Math.clamp(y, 0, Math.max(0, max));
+        return clamp(y, 0, Math.max(0, max));
     }
 
     /** JEI ist an, wenn die Liste zu sehen ist. Eine Suche ohne Treffer blendet die Liste aus, nicht aber das Panel. */
@@ -260,7 +264,7 @@ public final class BookmarkPanel {
 
     // ---------------------------------------------------------------- Zeichnen
 
-    static void render(Screen screen, GuiGraphicsExtractor g, int mx, int my) {
+    static void render(Screen screen, GuiGraphics g, int mx, int my) {
         Layout layout = activeLayout(screen);
         if (layout == null) {
             return;
@@ -269,10 +273,9 @@ public final class BookmarkPanel {
         IIngredientFilter filter = JeiBookmarksPlugin.runtime().getIngredientFilter();
         String current = filter.getFilterText().trim();
 
-        g.nextStratum();
         g.fill(layout.x(), layout.y(), layout.right(), layout.y() + layout.height(), COLOR_BACKGROUND);
         g.fill(layout.x(), layout.y(), layout.right(), layout.y() + HEADER_HEIGHT, COLOR_HEADER);
-        g.outline(layout.x(), layout.y(), layout.width(), layout.height(), COLOR_BORDER);
+        g.renderOutline(layout.x(), layout.y(), layout.width(), layout.height(), COLOR_BORDER);
 
         drawGrip(g, layout.x() + 3, layout.y() + 2, dragging || layout.overGrip(mx, my) ? COLOR_TEXT : COLOR_MUTED);
         // Der Pfeil zeigt zum naechsten Rand: dorthin klappt das Panel ein bzw. von dort aus.
@@ -280,9 +283,9 @@ public final class BookmarkPanel {
         drawButton(g, font, layout.collapseX(), layout.y() + 1, collapseGlyph, COLOR_TEXT, layout.overCollapse(mx, my));
         if (layout.collapsed()) {
             if (layout.overCollapse(mx, my)) {
-                g.setTooltipForNextFrame(font, Component.translatable("syntexjeibookmarks.expand"), mx, Math.max(my, TOOLTIP_MIN_Y));
+                g.renderTooltip(font, Component.translatable("syntexjeibookmarks.expand"), mx, Math.max(my, TOOLTIP_MIN_Y));
             } else if (!dragging && layout.overGrip(mx, my)) {
-                g.setTooltipForNextFrame(font, Component.translatable("syntexjeibookmarks.move"), mx, Math.max(my, TOOLTIP_MIN_Y));
+                g.renderTooltip(font, Component.translatable("syntexjeibookmarks.move"), mx, Math.max(my, TOOLTIP_MIN_Y));
             }
             return;
         }
@@ -294,7 +297,7 @@ public final class BookmarkPanel {
         int titleX = layout.x() + GRIP + 1;
         int titleWidth = layout.dockX() - titleX - 1;
         if (font.width(title()) <= titleWidth) {
-            g.text(font, title(), titleX, layout.y() + 2, COLOR_MUTED, false);
+            g.drawString(font, title(), titleX, layout.y() + 2, COLOR_MUTED, false);
         }
 
         List<Bookmark> bookmarks = BookmarkStore.bookmarks();
@@ -314,14 +317,14 @@ public final class BookmarkPanel {
             }
             int textX = layout.x() + PAD + 1;
             if (!display.icon().isEmpty()) {
-                g.pose().pushMatrix();
-                g.pose().translate(textX, rowY + 1);
-                g.pose().scale(ICON / 16f);
-                g.item(display.icon(), 0, 0);
-                g.pose().popMatrix();
+                g.pose().pushPose();
+                g.pose().translate(textX, rowY + 1, 0);
+                g.pose().scale(ICON / 16f, ICON / 16f, 1f);
+                g.renderItem(display.icon(), 0, 0);
+                g.pose().popPose();
                 textX += ICON + 1;
             }
-            g.text(font, fit(font, display.label(), rowRight - textX - 1), textX, rowY + 3, COLOR_TEXT, false);
+            g.drawString(font, fit(font, display.label(), rowRight - textX - 1), textX, rowY + 3, COLOR_TEXT, false);
         }
         if (scrollbar) {
             int top = layout.rowY(0);
@@ -334,7 +337,7 @@ public final class BookmarkPanel {
         renderTooltip(g, font, layout, current, mx, my);
     }
 
-    private static void renderTooltip(GuiGraphicsExtractor g, Font font, Layout layout, String current, int mx, int my) {
+    private static void renderTooltip(GuiGraphics g, Font font, Layout layout, String current, int mx, int my) {
         List<Component> lines = new ArrayList<>();
         if (dragging) {
             return;
@@ -369,12 +372,12 @@ public final class BookmarkPanel {
             }
         }
         if (!lines.isEmpty()) {
-            g.setTooltipForNextFrame(font, lines, Optional.empty(), mx, Math.max(my, TOOLTIP_MIN_Y));
+            g.renderTooltip(font, lines, Optional.empty(), mx, Math.max(my, TOOLTIP_MIN_Y));
         }
     }
 
     /** Zwei Spalten mal drei Punkte: das uebliche Zeichen fuer "hier anfassen". */
-    private static void drawGrip(GuiGraphicsExtractor g, int x, int y, int color) {
+    private static void drawGrip(GuiGraphics g, int x, int y, int color) {
         for (int column = 0; column < 2; column++) {
             for (int row = 0; row < 3; row++) {
                 g.fill(x + column * 2, y + row * 3, x + column * 2 + 1, y + row * 3 + 1, color);
@@ -382,11 +385,11 @@ public final class BookmarkPanel {
         }
     }
 
-    private static void drawButton(GuiGraphicsExtractor g, Font font, int x, int y, String text, int color, boolean hovered) {
+    private static void drawButton(GuiGraphics g, Font font, int x, int y, String text, int color, boolean hovered) {
         if (hovered) {
             g.fill(x, y, x + BUTTON, y + BUTTON, COLOR_HOVER);
         }
-        g.centeredText(font, text, x + BUTTON / 2, y + 1, color);
+        g.drawCenteredString(font, text, x + BUTTON / 2, y + 1, color);
     }
 
     private static String fit(Font font, String text, int width) {
@@ -456,7 +459,7 @@ public final class BookmarkPanel {
             return;
         }
         int reserved = BOTTOM_RESERVED;
-        int x = Math.clamp((int) Math.round(mx - grabX), 0, Math.max(0, layout.screenWidth() - layout.width()));
+        int x = clamp((int) Math.round(mx - grabX), 0, Math.max(0, layout.screenWidth() - layout.width()));
         int y = clampY((int) Math.round(my - grabY), layout.screenHeight(), reserved, layout.collapsed());
         // Die Seite richtet sich nach der Haelfte, in der die Panelmitte liegt; gemessen wird vom nahen Rand.
         boolean toLeft = x + layout.width() / 2.0 < layout.screenWidth() / 2.0;

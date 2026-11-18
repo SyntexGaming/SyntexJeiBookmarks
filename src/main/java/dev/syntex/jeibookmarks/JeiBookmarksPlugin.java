@@ -7,7 +7,7 @@ import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,8 +26,8 @@ public class JeiBookmarksPlugin implements IModPlugin {
     }
 
     @Override
-    public Identifier getPluginUid() {
-        return Identifier.fromNamespaceAndPath(SyntexJeiBookmarks.MODID, "main");
+    public ResourceLocation getPluginUid() {
+        return new ResourceLocation(SyntexJeiBookmarks.MODID, "main");
     }
 
     @Override

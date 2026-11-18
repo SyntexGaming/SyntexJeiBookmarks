@@ -6,24 +6,22 @@ import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.resources.Identifier;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.ScreenEvent;
-import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.client.settings.KeyConflictContext;
 
 import java.util.Optional;
 
 /** Bindet das Panel an die Screen-Events. Hoechste Prioritaet, damit Klicks im Panel JEI gar nicht erst erreichen. */
 public final class ClientEvents {
 
-    private static final KeyMapping.Category CATEGORY =
-            new KeyMapping.Category(Identifier.fromNamespaceAndPath(SyntexJeiBookmarks.MODID, "main"));
+    private static final String CATEGORY = "key.category.syntexjeibookmarks.main";
 
     public static final KeyMapping ADD_MOD = new KeyMapping(
             "key.syntexjeibookmarks.add_mod",
@@ -39,18 +37,17 @@ public final class ClientEvents {
     private ClientEvents() {}
 
     static void registerKeys(RegisterKeyMappingsEvent event) {
-        event.registerCategory(CATEGORY);
         event.register(ADD_MOD);
     }
 
-    /** Foreground, nicht Post: Post kommt erst nach den Tooltips, ein dort gesetzter wuerde nie gezeichnet. */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onRender(ScreenEvent.Render.Foreground event) {
-        GuiGraphicsExtractor g = event.getGuiGraphics();
-        g.pose().pushMatrix();
-        g.pose().identity();
+    /** Post: JEI und Tooltips sind schon gezeichnet, die Hoehe hebt das Panel ueber deren Items. */
+    @SubscribeEvent
+    public static void onRender(ScreenEvent.Render.Post event) {
+        GuiGraphics g = event.getGuiGraphics();
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 400);
         BookmarkPanel.render(event.getScreen(), g, event.getMouseX(), event.getMouseY());
-        g.pose().popMatrix();
+        g.pose().popPose();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -80,14 +77,14 @@ public final class ClientEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onMouseScrolled(ScreenEvent.MouseScrolled.Pre event) {
-        if (BookmarkPanel.mouseScrolled(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getScrollDeltaY())) {
+        if (BookmarkPanel.mouseScrolled(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        if (!ADD_MOD.matches(event.getKeyEvent())) {
+        if (!ADD_MOD.matches(event.getKeyCode(), event.getScanCode())) {
             return;
         }
         IJeiRuntime runtime = JeiBookmarksPlugin.runtime();
@@ -109,8 +106,8 @@ public final class ClientEvents {
         // Im Kreativ-Suchreiter tippt man ohne fokussiertes Feld, dort zaehlen nur die JEI-Listen.
         if (ingredient.isEmpty() && !(screen instanceof CreativeModeInventoryScreen creative && !creative.isInventoryOpen())) {
             Minecraft minecraft = Minecraft.getInstance();
-            double mx = minecraft.mouseHandler.getScaledXPos(minecraft.getWindow());
-            double my = minecraft.mouseHandler.getScaledYPos(minecraft.getWindow());
+            double mx = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
+            double my = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
             ingredient = runtime.getScreenHelper().getClickableIngredientUnderMouse(screen, mx, my)
                     .<ITypedIngredient<?>>map(clickable -> clickable.getTypedIngredient())
                     .findFirst();
