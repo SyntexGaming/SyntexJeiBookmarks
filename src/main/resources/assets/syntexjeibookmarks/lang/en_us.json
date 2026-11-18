@@ -1,0 +1,20 @@
+{
+  "key.category.syntexjeibookmarks.main": "Syntex JEI Bookmarks",
+  "key.syntexjeibookmarks.add_mod": "Save mod of item under mouse",
+  "syntexjeibookmarks.title": "Bookmarks",
+  "syntexjeibookmarks.row.search": "Left click: search",
+  "syntexjeibookmarks.row.clear": "Left click: clear search",
+  "syntexjeibookmarks.row.remove": "Right click: remove",
+  "syntexjeibookmarks.add": "Save current search",
+  "syntexjeibookmarks.add.query": "Saves: %s",
+  "syntexjeibookmarks.add.duplicate": "%s is already saved",
+  "syntexjeibookmarks.add.empty": "Type something into the JEI search first",
+  "syntexjeibookmarks.add.mod_hint": "[%s] over an item: save its mod",
+  "syntexjeibookmarks.collapse": "Collapse",
+  "syntexjeibookmarks.expand": "Expand bookmarks",
+  "syntexjeibookmarks.move": "Move panel",
+  "syntexjeibookmarks.move.hint": "Hold the mouse button and drag",
+  "syntexjeibookmarks.dock.left": "Move to the left side",
+  "syntexjeibookmarks.dock.right": "Move to the right side",
+  "syntexjeibookmarks.dock.reset": "Right click: default position"
+}

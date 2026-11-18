@@ -1,0 +1,20 @@
+# Gradle / Build
+.gradle/
+build/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+
+# JEI-Jar zum Kompilieren: selbst nach libs/ legen, nicht einchecken
+libs/*.jar
+
+# Fertige Jars gehören auf Modrinth/CurseForge/GitHub Releases, nicht ins Repo
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
