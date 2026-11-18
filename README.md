@@ -6,6 +6,17 @@ Client-side mod for Minecraft 26.1 and 1.21.1 (NeoForge) and 1.20.1 (Forge). Req
 
 This was actually meant to be a private mod just for me, but why should I be the only one who gets to use it?
 
+## Download
+
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/syntexjeibookmarks)
+- [GitHub Releases](https://github.com/SyntexGaming/SyntexJeiBookmarks/releases)
+
+| Minecraft | Loader | Branch |
+| --- | --- | --- |
+| 26.1.2 | NeoForge | `main` |
+| 1.21.1 | NeoForge | `1.21.1` |
+| 1.20.1 | Forge | `1.20.1` |
+
 ## How to use
 
 - `+` in the panel header saves the current text of the JEI search bar
