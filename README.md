@@ -6,7 +6,7 @@ Client-side mod for Minecraft 26.1 and 1.21.1 (NeoForge) and 1.20.1 (Forge). Req
 
 This was actually meant to be a private mod just for me, but why should I be the only one who gets to use it?
 
-Built with AI help (vibecoded with Claude Code) and tested in a real Minecraft client.
+Built with AI help (vibecoded with Claude Code), because it started as a private project that has now become public. Tested in a real Minecraft client.
 
 ## Download
 
@@ -53,6 +53,6 @@ Such-Lesezeichen für JEI. Speichere Suchen wie `@powah`, klick darauf, und die 
 
 Eigentlich war das ein privater Mod nur für mich, aber warum sollte ich der Einzige sein, der ihn nutzen kann?
 
-Mit KI-Hilfe gebaut (vibecoded mit Claude Code) und in einem echten Minecraft-Client getestet.
+Mit KI-Hilfe gebaut (vibecoded mit Claude Code), weil es ein privates Projekt war, das jetzt öffentlich wurde. In einem echten Minecraft-Client getestet.
 
 Bedienung: `+` speichert die aktuelle Suche, Taste `M` über einem Item speichert dessen Mod, Linksklick sucht (zweiter Klick leert), Rechtsklick entfernt, das Panel lässt sich am Griff `⋮⋮` verschieben.
